@@ -1,40 +1,97 @@
 import os
 from typing import List
+import PyPDF2
 
 
-class TextFileLoader:
+
+# class TextFileLoader:
+#     def __init__(self, path: str, encoding: str = "utf-8"):
+#         self.documents = []
+#         self.path = path
+#         self.encoding = encoding
+
+#         print("HELLO")
+
+#     def load(self):
+#         if os.path.isdir(self.path):
+#             self.load_directory()
+#         elif os.path.isfile(self.path) and self.path.endswith(".txt"):
+#             self.load_file()
+#         else:
+#             raise ValueError(
+#                 "Provided path is neither a valid directory nor a .txt file."
+#             )
+
+#     def load_file(self):
+#         with open(self.path, "r", encoding=self.encoding) as f:
+#             self.documents.append(f.read())
+
+#     def load_directory(self):
+#         for root, _, files in os.walk(self.path):
+#             for file in files:
+#                 if file.endswith(".txt"):
+#                     with open(
+#                         os.path.join(root, file), "r", encoding=self.encoding
+#                     ) as f:
+#                         self.documents.append(f.read())
+
+#     def load_documents(self):
+#         self.load()
+#         return self.documents
+
+
+class PdfFileLoader:
     def __init__(self, path: str, encoding: str = "utf-8"):
         self.documents = []
         self.path = path
         self.encoding = encoding
+        print("HELLoooO")  # This prints "HELLO" when an instance is created
 
     def load(self):
         if os.path.isdir(self.path):
             self.load_directory()
-        elif os.path.isfile(self.path) and self.path.endswith(".txt"):
-            self.load_file()
+        elif os.path.isfile(self.path):
+            if self.path.endswith(".txt"):
+                self.load_file()
+            elif self.path.endswith(".pdf"):
+                self.load_pdf_file()
+            else:
+                raise ValueError(
+                    "Provided path is neither a valid directory nor a supported file format."
+                )
         else:
-            raise ValueError(
-                "Provided path is neither a valid directory nor a .txt file."
-            )
+            raise ValueError("Provided path does not exist.")
 
     def load_file(self):
         with open(self.path, "r", encoding=self.encoding) as f:
             self.documents.append(f.read())
 
+    def load_pdf_file(self):
+        with open(self.path, "rb") as f:  # 'rb' for reading binary files
+            pdf_reader = PyPDF2.PdfReader(f)
+            text = ''
+            for page in pdf_reader.pages:
+                text += (page.extract_text() or '')  # Ensuring no None is appended
+            self.documents.append(text)
+
     def load_directory(self):
         for root, _, files in os.walk(self.path):
             for file in files:
+                file_path = os.path.join(root, file)
                 if file.endswith(".txt"):
-                    with open(
-                        os.path.join(root, file), "r", encoding=self.encoding
-                    ) as f:
+                    with open(file_path, "r", encoding=self.encoding) as f:
                         self.documents.append(f.read())
+                elif file.endswith(".pdf"):
+                    with open(file_path, "rb") as f:
+                        pdf_reader = PyPDF2.PdfReader(f)
+                        text = ''
+                        for page in pdf_reader.pages:
+                            text += (page.extract_text() or '')
+                        self.documents.append(text)
 
     def load_documents(self):
         self.load()
         return self.documents
-
 
 class CharacterTextSplitter:
     def __init__(
